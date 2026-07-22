@@ -1,5 +1,3 @@
-Language: EN | [简中](README.zh-CN.md)
-
 <p align="center">
   <img width="220" alt="Recordly Logo" src="https://github.com/user-attachments/assets/414b8838-6731-45d4-a815-6e3c0aa1fe52" />
 </p>
@@ -15,10 +13,6 @@ Language: EN | [简中](README.zh-CN.md)
 
 <img width="1280" height="720" alt="MP4 to GIF export (4)" src="https://github.com/user-attachments/assets/e6d68606-5fc0-4f70-99cd-7521982dc13b" />
 
-
----
-### Backed by the community
-<a href="https://coderabbit.link/recordly"><img width="400" alt="CodeRabbit Typemark" src="https://github.com/user-attachments/assets/3926ecfd-8652-4f2d-8da8-ac7641017cf5" /></a>
 
 ---
 
@@ -337,56 +331,6 @@ Recordly combines a platform-specific capture layer with a renderer-driven edito
 
 **Projects**
 - `.recordly` files store the source media path plus editor state so work can be reopened later
-
----
-
-# Contribution
-
-Contributions are welcome.
-
-Areas where help is especially useful:
-
-- Linux capture and cursor behavior
-- Export performance and stability
-- UI and UX refinement
-- Localisation work
-- Additional editor tools and workflow polish
-
-Please keep pull requests focused, test recording/edit/export flows, and avoid unrelated refactors.
-
-See `CONTRIBUTING.md` for guidelines.
-
----
-
-# Community
-
-Bug reports and feature requests:
-
-https://github.com/webadderallorg/Recordly/issues
-
-Pull requests are welcome.
-
----
-
-# Hall of Supporters
-
-[![Ko-Fi](https://img.shields.io/badge/Ko--fi-F16061?style=for-the-badge&logo=ko-fi&logoColor=white)](https://ko-fi.com/webadderall)
-
-- Tom Egan @tomegan on X
-- Robin Ebers @robinebers on X
-- Tadees
-- buildwithfur
-- piccinato
-- Tobias
-- Anonymous Supporter
-- Tandava Appadoo
-- Digitalfastmind
-- Roberto Marcelino
-- Tony
-- Rajan RK
-- Francesco
-- Erwan
-- Anonymous supporter
 
 ---
 
