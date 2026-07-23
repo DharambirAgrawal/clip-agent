@@ -17,7 +17,9 @@ import {
 	type RecordlyProject,
 } from "./projectStore.js";
 import { renderProjectVideo } from "./staticLayoutExporter.js";
+import { loadCursorTelemetry } from "./telemetry.js";
 import { transcribeVideo } from "./whisper.js";
+import { buildInteractionZoomSuggestions } from "./zoomSuggestion.js";
 
 const server = new McpServer({ name: "recordly-mcp-server", version: "0.1.0" });
 
@@ -135,12 +137,12 @@ server.tool(
 
 server.tool(
 	"add_zoom",
-	"Add a zoom-in region to a project's timeline, focused on a point in the frame.",
+	"Add a zoom-in region to a project's timeline, focused on a point in the full source frame (0-1). Renders as a real animated crop in render_preview/export_final (ease in, hold, ease out) — this is an ffmpeg-native zoom, not a port of the app's own Canvas-based zoom rendering, so it won't be pixel-identical to it.",
 	{
 		project: z.string().describe("Project name or absolute path to a .recordly file"),
 		startMs: z.number(),
 		endMs: z.number(),
-		depth: z.number().min(1).max(6).optional().describe("Zoom depth level 1-6 (default 2)"),
+		depth: z.number().min(1).max(6).optional().describe("Zoom depth level 1-6 (default 2; roughly 1.25x-5x scale)"),
 		focusX: z.number().min(0).max(1).optional().describe("Horizontal focus point, 0-1 (default 0.5)"),
 		focusY: z.number().min(0).max(1).optional().describe("Vertical focus point, 0-1 (default 0.5)"),
 	},
@@ -157,6 +159,27 @@ server.tool(
 		};
 		await saveProject(projectPath, withRegions(data, "zoomRegions", [...existing, region]));
 		return textResult(`Added zoom region ${startMs}ms–${endMs}ms at depth ${region.depth}.`);
+	},
+);
+
+server.tool(
+	"suggest_zooms",
+	"Analyze a project's recorded cursor movement (clicks, dwells) to suggest zoom regions — the same click-clustering heuristic the desktop app's auto-zoom feature uses. Requires a <video>.cursor.json telemetry sidecar file (written during desktop recording); returns nothing useful for videos with no mouse cursor (e.g. phone screen recordings). Returns suggestions only — call add_zoom for the ones you want to keep.",
+	{ project: z.string().describe("Project name or absolute path to a .recordly file") },
+	async ({ project }) => {
+		const projectPath = await resolveProjectPath(project);
+		const data = await openProject(projectPath);
+		const [info, telemetry] = await Promise.all([
+			getMediaInfo(data.videoPath),
+			loadCursorTelemetry(data.videoPath),
+		]);
+		const result = buildInteractionZoomSuggestions({ cursorTelemetry: telemetry, totalMs: info.durationMs });
+		if (result.status !== "ok") {
+			return textResult(
+				`No zoom suggestions (${result.status}). ${result.status === "no-telemetry" ? "No cursor telemetry file found next to the source video — this is expected for recordings without a tracked mouse cursor." : ""}`,
+			);
+		}
+		return textResult(JSON.stringify(result.suggestions, null, 2));
 	},
 );
 

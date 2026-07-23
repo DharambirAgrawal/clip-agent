@@ -13,6 +13,7 @@ import { getMediaInfo } from "./media.js";
 import { getShadowFilterPadding, VIDEO_SHADOW_LAYER_PROFILES } from "./shadowProfile.js";
 import { createSquircleMaskPgmBuffer } from "./squircle.js";
 import { getWebcamOverlayDimensionsPx, getWebcamOverlayPosition, type WebcamPositionPreset } from "./webcamGeometry.js";
+import { buildZoomPanExpression, remapRegionsToTrimmedTimeline, type ZoomRegionInput } from "./zoomRenderer.js";
 
 const execFileAsync = promisify(execFile);
 
@@ -210,15 +211,19 @@ export interface StaticLayoutOptions {
 	shadowIntensity: number;
 	cropRegion: unknown;
 	webcam?: WebcamLayoutInput | null;
+	/** Already remapped into the trimmed (output) timeline — see zoomRenderer.ts. */
+	zoomRegions?: ZoomRegionInput[];
+	zoomInMs?: number;
+	zoomOutMs?: number;
 }
 
 /**
- * Composites wallpaper background + padded/rounded/shadowed video + an optional webcam
- * bubble onto a single canvas across the whole (already-trimmed) clip. This covers the
- * *static* parts of Recordly's frame styling — it does not animate zoom regions, draw
- * the cursor, or render device-frame chrome, all of which live in the per-frame
- * Canvas/WebGL renderer (src/lib/exporter/modernFrameRenderer.ts) that only runs inside
- * the desktop app.
+ * Composites wallpaper background + padded/rounded/shadowed/zoom-animated video + an
+ * optional webcam bubble onto a single canvas across the whole (already-trimmed) clip.
+ * Zoom is a real per-frame animated crop (see zoomRenderer.ts) — an ffmpeg-native
+ * technique, not a port of the app's own zoom rendering (which redraws via PixiJS/Canvas
+ * each frame). It does not draw the cursor overlay or device-frame chrome, which do only
+ * live in that Canvas/WebGL renderer (src/lib/exporter/modernFrameRenderer.ts).
  */
 export async function compositeStaticLayout(
 	trimmedVideoPath: string,
@@ -338,9 +343,42 @@ export async function compositeStaticLayout(
 		const cropY = Math.round(cropRegion.y * info.height);
 		const cropW = Math.max(1, Math.round(cropRegion.width * info.width));
 		const cropH = Math.max(1, Math.round(cropRegion.height * info.height));
-		filterParts.push(
-			`[1:v]crop=w=${cropW}:h=${cropH}:x=${cropX}:y=${cropY},scale=w=${videoRect.width}:h=${videoRect.height},format=rgba[vid_scaled]`,
-		);
+
+		const zoomRegions = options.zoomRegions ?? [];
+		// Focus is relative to the full source frame; zoompan (applied after the static
+		// crop below) sees only the cropped rect, so re-express focus relative to that.
+		const zoomRegionsRelativeToCrop = zoomRegions.map((region) => ({
+			...region,
+			focus: {
+				cx: cropW > 0 ? Math.min(1, Math.max(0, (region.focus.cx * (info.width ?? 0) - cropX) / cropW)) : 0.5,
+				cy: cropH > 0 ? Math.min(1, Math.max(0, (region.focus.cy * (info.height ?? 0) - cropY) / cropH)) : 0.5,
+			},
+		}));
+		const zoomPan =
+			zoomRegionsRelativeToCrop.length > 0
+				? buildZoomPanExpression({
+						regions: zoomRegionsRelativeToCrop,
+						fps: Number(frameRate),
+						baseCropRect: { width: cropW, height: cropH },
+						zoomInMs: options.zoomInMs ?? 350,
+						zoomOutMs: options.zoomOutMs ?? 350,
+					})
+				: null;
+
+		// zoompan is used instead of an animated `crop` because this ffmpeg build's crop
+		// filter doesn't actually support runtime parameter changes (`eval` option
+		// doesn't exist, and sendcmd targeting it returns "Function not implemented") —
+		// confirmed empirically, not assumed. zoompan is a different filter, purpose-built
+		// for animated zoom, and does evaluate per output frame.
+		if (zoomPan) {
+			filterParts.push(
+				`[1:v]crop=w=${cropW}:h=${cropH}:x=${cropX}:y=${cropY},zoompan=z='${zoomPan.zoomExpr}':x='${zoomPan.xExpr}':y='${zoomPan.yExpr}':d=1:s=${videoRect.width}x${videoRect.height}:fps=${frameRate},format=rgba[vid_scaled]`,
+			);
+		} else {
+			filterParts.push(
+				`[1:v]crop=w=${cropW}:h=${cropH}:x=${cropX}:y=${cropY},scale=w=${videoRect.width}:h=${videoRect.height},format=rgba[vid_scaled]`,
+			);
+		}
 		let videoLabel = "vid_scaled";
 		if (videoMaskInputIndex !== null) {
 			filterParts.push(`[${videoMaskInputIndex}:v]format=gray[vid_mask]`);
@@ -377,6 +415,9 @@ export async function compositeStaticLayout(
 		}
 		args.push(outputPath);
 
+		if (process.env["RECORDLY_MCP_DEBUG_ARGS"]) {
+			console.error("[compositeStaticLayout args]", JSON.stringify(args, null, 2));
+		}
 		await execFileAsync(getFfmpegPath(), args);
 		return { outputPath, canvasWidth: canvas.width, canvasHeight: canvas.height };
 	} finally {
@@ -388,6 +429,7 @@ function needsCompositing(styling: StaticLayoutOptions): boolean {
 	if ((styling.borderRadius ?? 0) > 0.5) return true;
 	if ((styling.shadowIntensity ?? 0) > 0) return true;
 	if (styling.webcam?.enabled) return true;
+	if ((styling.zoomRegions?.length ?? 0) > 0) return true;
 	if (resolveWallpaperImagePath(styling.wallpaper)) return true;
 	const padding = normalizePadding(styling.padding);
 	if (typeof padding === "number") return padding > 0;
@@ -416,7 +458,20 @@ export async function renderProjectVideo(
 			? (project.editor.webcam as Record<string, unknown>)
 			: {};
 
+	const zoomRegionsRaw = (
+		Array.isArray(project.editor.zoomRegions) ? project.editor.zoomRegions : []
+	) as Array<{ startMs: number; endMs: number; depth: number; focus: { cx: number; cy: number } }>;
+	let remappedZoomRegions: ZoomRegionInput[] = [];
+	if (zoomRegionsRaw.length > 0) {
+		const sourceInfo = await getMediaInfo(project.videoPath);
+		const keepSegments = buildKeepSegments(trimRegions, sourceInfo.durationMs);
+		remappedZoomRegions = remapRegionsToTrimmedTimeline(zoomRegionsRaw, keepSegments);
+	}
+
 	const styling: StaticLayoutOptions = {
+		zoomRegions: remappedZoomRegions,
+		zoomInMs: typeof project.editor.zoomInDurationMs === "number" ? project.editor.zoomInDurationMs : undefined,
+		zoomOutMs: typeof project.editor.zoomOutDurationMs === "number" ? project.editor.zoomOutDurationMs : undefined,
 		aspectRatio: typeof project.editor.aspectRatio === "string" ? project.editor.aspectRatio : "native",
 		wallpaper: project.editor.wallpaper,
 		padding: project.editor.padding,
