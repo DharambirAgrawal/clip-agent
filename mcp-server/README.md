@@ -1,8 +1,8 @@
-# Recordly MCP Server
+# ClipAgent MCP Server
 
-Exposes Recordly's project-editing model, media analysis, and export as [MCP](https://modelcontextprotocol.io) tools, so Claude (or any MCP client) can edit `.recordly` projects directly instead of a human dragging clips on a timeline.
+Exposes ClipAgent's (a Recordly fork's) project-editing model, media analysis, and export as [MCP](https://modelcontextprotocol.io) tools, so Claude (or any MCP client) can edit `.recordly` projects directly instead of a human dragging clips on a timeline.
 
-This is Phase 1 + Phase 2 of the plan: real, working tools wired to Recordly's actual on-disk project format, ffmpeg, and its bundled whisper.cpp runtime — not a mockup. See the "What's real vs. not yet" section below for the current honest scope.
+This is Phase 1 + Phase 2 of the plan: real, working tools wired to the app's actual on-disk project format, ffmpeg, and its bundled whisper.cpp runtime — not a mockup. See the "What's real vs. not yet" section below for the current honest scope.
 
 ## Setup
 
@@ -19,13 +19,13 @@ Point your MCP client at the built server, e.g. in Claude Desktop / Claude Code'
   "mcpServers": {
     "recordly": {
       "command": "node",
-      "args": ["/absolute/path/to/Recordly/mcp-server/dist/index.js"]
+      "args": ["/absolute/path/to/clip-agent/mcp-server/dist/index.js"]
     }
   }
 }
 ```
 
-By default this reads/writes the same `Projects` folder the Recordly desktop app uses (`~/Library/Application Support/Recordly/recordings/Projects` on macOS, the OS-equivalent elsewhere). Set `RECORDLY_USER_DATA_DIR` to point at a different Recordly data directory (e.g. a `-dev` build).
+By default this reads/writes the same `Projects` folder the ClipAgent desktop app uses (`~/Library/Application Support/ClipAgent/recordings/Projects` on macOS, the OS-equivalent elsewhere). Set `RECORDLY_USER_DATA_DIR` to point at a different data directory (e.g. a `-dev` build).
 
 ## Tools
 

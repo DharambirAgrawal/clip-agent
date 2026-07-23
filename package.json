@@ -1,15 +1,15 @@
 {
-	"name": "recordly",
-	"productName": "Recordly",
-	"description": "A free, creator-focused screen recorder with auto-zoom, cursor effects, backgrounds, annotations, and more - built for polished videos out of the box.",
-	"author": "webadderall",
-	"homepage": "https://github.com/webadderallorg/Recordly",
+	"name": "clip-agent",
+	"productName": "ClipAgent",
+	"description": "AI-editable screen recorder with auto-zoom, cursor effects, backgrounds, annotations, and more - built for polished videos out of the box.",
+	"author": "DharambirAgrawal",
+	"homepage": "https://github.com/DharambirAgrawal/clip-agent",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/webadderallorg/Recordly.git"
+		"url": "https://github.com/DharambirAgrawal/clip-agent.git"
 	},
 	"bugs": {
-		"url": "https://github.com/webadderallorg/Recordly/issues"
+		"url": "https://github.com/DharambirAgrawal/clip-agent/issues"
 	},
 	"private": true,
 	"version": "1.3.5-beta.2",

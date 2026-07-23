@@ -252,8 +252,12 @@ export async function compositeStaticLayout(
 
 	// Looped image inputs (background, masks) are infinite unless explicitly bounded —
 	// without `-t` here, ffmpeg's overlay chain never sees an EOF from the (infinite)
-	// base input and the encode simply never finishes, regardless of `-shortest`.
+	// base input and the encode simply never finishes, regardless of `-shortest`. They
+	// also need an explicit `-framerate` matching the source, or ffmpeg silently falls
+	// back to a default 25fps for the whole overlay graph even when the real footage is
+	// 60fps.
 	const durationSec = Math.max(0.1, info.durationMs / 1000).toFixed(3);
+	const frameRate = info.frameRate && info.frameRate > 0 ? info.frameRate.toFixed(3) : "30";
 
 	const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "recordly-mcp-layout-"));
 	try {
@@ -268,7 +272,7 @@ export async function compositeStaticLayout(
 		});
 
 		const args = ["-y", "-hide_banner", "-loglevel", "error"];
-		args.push("-t", durationSec, "-loop", "1", "-i", backgroundPath);
+		args.push("-framerate", frameRate, "-t", durationSec, "-loop", "1", "-i", backgroundPath);
 		args.push("-i", trimmedVideoPath);
 
 		let inputIndex = 2;
@@ -276,7 +280,7 @@ export async function compositeStaticLayout(
 		if (scaledRadius > 0.5) {
 			const mask = createSquircleMaskPgmBuffer(videoRect.width, videoRect.height, scaledRadius);
 			const maskPath = await writePgm(mask, tempDir, "video-mask");
-			args.push("-t", durationSec, "-loop", "1", "-i", maskPath);
+			args.push("-framerate", frameRate, "-t", durationSec, "-loop", "1", "-i", maskPath);
 			videoMaskInputIndex = inputIndex;
 			inputIndex += 1;
 		}
@@ -322,7 +326,7 @@ export async function compositeStaticLayout(
 			if (webcam.cornerRadius > 0.5) {
 				const mask = createSquircleMaskPgmBuffer(webcamRect.width, webcamRect.height, webcam.cornerRadius);
 				const maskPath = await writePgm(mask, tempDir, "webcam-mask");
-				args.push("-t", durationSec, "-loop", "1", "-i", maskPath);
+				args.push("-framerate", frameRate, "-t", durationSec, "-loop", "1", "-i", maskPath);
 				webcamMaskInputIndex = inputIndex;
 				inputIndex += 1;
 			}
@@ -367,7 +371,7 @@ export async function compositeStaticLayout(
 		if (info.hasAudio) {
 			args.push("-map", "1:a");
 		}
-		args.push("-c:v", "libx264", "-preset", "veryfast", "-crf", "20", "-shortest");
+		args.push("-r", frameRate, "-c:v", "libx264", "-preset", "veryfast", "-crf", "20", "-shortest");
 		if (info.hasAudio) {
 			args.push("-c:a", "aac", "-b:a", "160k");
 		}

@@ -207,15 +207,27 @@ server.tool(
 
 server.tool(
 	"apply_frame_style",
-	"Set a project's background frame, wallpaper, padding, and corner radius.",
+	"Set a project's background frame, wallpaper, padding, corner radius, and canvas aspect ratio.",
 	{
 		project: z.string().describe("Project name or absolute path to a .recordly file"),
 		frame: z.string().nullable().optional().describe("Frame id, e.g. 'recordly.frames/browser-dark', or null for none"),
 		wallpaper: z.string().optional(),
-		padding: z.number().min(0).max(100).optional().describe("Uniform padding percentage"),
+		padding: z
+			.number()
+			.min(0)
+			.max(100)
+			.optional()
+			.describe(
+				"Uniform padding, 0-100. The visible inset is scaled down internally (~0.2x) to match the app's own padding slider, so small values look like almost no change — use 50-80 for a clearly visible framed margin.",
+			),
 		borderRadius: z.number().min(0).optional(),
+		shadowIntensity: z.number().min(0).max(1).optional(),
+		aspectRatio: z
+			.enum(["native", "16:9", "9:16", "1:1", "4:3", "4:5", "16:10", "10:16"])
+			.optional()
+			.describe("Canvas aspect ratio; 'native' matches the source video's own aspect ratio (e.g. for portrait phone recordings)"),
 	},
-	async ({ project, frame, wallpaper, padding, borderRadius }) => {
+	async ({ project, frame, wallpaper, padding, borderRadius, shadowIntensity, aspectRatio }) => {
 		const projectPath = await resolveProjectPath(project);
 		const data = await openProject(projectPath);
 		const editor = { ...data.editor };
@@ -225,6 +237,8 @@ server.tool(
 			editor.padding = { top: padding, bottom: padding, left: padding, right: padding, linked: true };
 		}
 		if (borderRadius !== undefined) editor.borderRadius = borderRadius;
+		if (shadowIntensity !== undefined) editor.shadowIntensity = shadowIntensity;
+		if (aspectRatio !== undefined) editor.aspectRatio = aspectRatio;
 		await saveProject(projectPath, { ...data, editor });
 		return textResult("Frame style updated.");
 	},

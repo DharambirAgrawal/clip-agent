@@ -1,5 +1,5 @@
 <p align="center">
-  <img width="220" alt="Recordly Logo" src="https://github.com/user-attachments/assets/414b8838-6731-45d4-a815-6e3c0aa1fe52" />
+  <img width="220" alt="ClipAgent Logo" src="https://github.com/user-attachments/assets/414b8838-6731-45d4-a815-6e3c0aa1fe52" />
 </p>
 
 <p align="center">
@@ -7,20 +7,19 @@
   <img src="https://img.shields.io/badge/open%20source-AGPL3.0-2563eb?style=for-the-badge" alt="AGPL 3.0 license" />
 </p>
 
-### Create polished demo videos in minutes
-[Recordly](https://www.recordly.dev) is your **open-source screen recorder** and editor for **walkthroughs, demos, product videos**, and more. 
-**Accepting PRs.**
+### Screen recording and editing, driven by Claude
+ClipAgent is a screen recorder and editor for **walkthroughs, demos, and product videos**, with an MCP server so Claude can transcribe, trim, style, and export directly — no timeline dragging required.
 
 <img width="1280" height="720" alt="MP4 to GIF export (4)" src="https://github.com/user-attachments/assets/e6d68606-5fc0-4f70-99cd-7521982dc13b" />
 
 
 ---
 
-## What is Recordly?
+## What is ClipAgent?
 
-Recordly is a desktop app for recording and editing screen captures with motion-driven presentation tools built in. Instead of sending raw footage to a motion designer just to add zooms, cursor polish, or a styled background, Recordly handles that workflow in one place for free.
+ClipAgent is a desktop app for recording and editing screen captures with motion-driven presentation tools built in, plus an MCP server (`mcp-server/`) that exposes the same editing model to Claude. Instead of sending raw footage to a motion designer just to add zooms, cursor polish, or a styled background — or dragging clips on a timeline yourself — ClipAgent handles that workflow in one place, drivable by an AI agent.
 
-Recordly runs on:
+ClipAgent runs on:
 
 - **macOS** 14.0+
 - **Windows** 10 Build 19041+
@@ -37,17 +36,17 @@ Platform notes:
 # Core Features
 
 ## Auto-zooms, cursor polish, and styled frames
-Recordly can automatically emphasize activity with zoom suggestions, smooth cursor movement, add motion effects, and place the final composition inside a styled frame with wallpapers, colors, gradients, blur, padding, and shadows.
+ClipAgent can automatically emphasize activity with zoom suggestions, smooth cursor movement, add motion effects, and place the final composition inside a styled frame with wallpapers, colors, gradients, blur, padding, and shadows.
 
 <p>
-  <img src="./docs/media/feature1.gif" width="450" alt="Recordly cursor and zoom demo video">
+  <img src="./docs/media/feature1.gif" width="450" alt="ClipAgent cursor and zoom demo video">
 </p>
 
 ## Dynamic webcam bubble overlays
 Add webcam footage as an overlay bubble, position it with presets or custom coordinates, mirror it, control shadow and roundness, and optionally make it react to zoom so it stays visually balanced during motion.
 
 <p>
-  <img src="./docs/media/feature2.gif" width="450" alt="Recordly webcam overlay demo video">
+  <img src="./docs/media/feature2.gif" width="450" alt="ClipAgent webcam overlay demo video">
 </p>
 
 ## Timeline editing built for demos
@@ -59,9 +58,9 @@ Use drag-and-drop timeline tools for zooms, trims, speed regions, annotations, e
 
 ## Extensions & Marketplace
 
-Recordly has a community-driven extension system. Anyone can build and publish extensions that add new capabilities to Recordly — cursor click sounds, device frames, browser mockups, wallpapers, render hooks, settings panels, and more.
+ClipAgent has a permission-gated extension system carried over from Recordly. Extensions can add cursor click sounds, device frames, browser mockups, wallpapers, render hooks, settings panels, and more, loaded locally via `Extensions -> Open Directory` in the app.
 
-Browse and install community extensions from the [Recordly Marketplace](https://marketplace.recordly.dev/extensions).
+There's no ClipAgent-specific extension marketplace yet — Recordly's own [marketplace](https://marketplace.recordly.dev/extensions) is a separate, upstream service.
 
 ---
 
@@ -147,15 +146,15 @@ Browse and install community extensions from the [Recordly Marketplace](https://
 # Screenshots
 
 <p align="center">
-  <img src="https://i.postimg.cc/8CrQtGJf/Screenshot-2026-04-30-at-5-11-52-pm.png" width="700" alt="Recordly recording interface screenshot">
+  <img src="https://i.postimg.cc/8CrQtGJf/Screenshot-2026-04-30-at-5-11-52-pm.png" width="700" alt="ClipAgent recording interface screenshot">
 </p>
 
 <p align="center">
-  <img src="https://i.postimg.cc/pLSMfrTM/Screenshot-2026-04-30-at-5-11-45-pm.png" width="700" alt="Recordly editor screenshot">
+  <img src="https://i.postimg.cc/pLSMfrTM/Screenshot-2026-04-30-at-5-11-45-pm.png" width="700" alt="ClipAgent editor screenshot">
 </p>
 
 <p align="center">
-  <img src="https://i.postimg.cc/Zn9VY6bg/Screenshot-2026-03-18-at-6-32-59-pm.png" width="700" alt="Recordly timeline screenshot">
+  <img src="https://i.postimg.cc/Zn9VY6bg/Screenshot-2026-03-18-at-6-32-59-pm.png" width="700" alt="ClipAgent timeline screenshot">
 </p>
 
 ---
@@ -164,21 +163,7 @@ Browse and install community extensions from the [Recordly Marketplace](https://
 
 ## Download a build
 
-Prebuilt releases are available at:
-
-https://github.com/webadderallorg/Recordly/releases
-
----
-
-## Arch Linux / Manjaro (yay)
-
-Install from the AUR ([recordly-bin](https://aur.archlinux.org/packages/recordly-bin)):
-
-```bash
-yay -S recordly-bin
-```
-
-PKGBUILD, desktop entry, release sync, and optional **local-from-source** packaging live in **[recordly-aur](https://github.com/firtoz/recordly-aur)** so this repository stays free of Arch release chores. For maintainer contact and how the package is updated, see that repo or the AUR package page.
+No prebuilt releases are published for this fork yet — see "Build from source" below. (The upstream Recordly project publishes its own releases at [webadderallorg/Recordly/releases](https://github.com/webadderallorg/Recordly/releases), but those are a different app.)
 
 ---
 
@@ -199,8 +184,8 @@ sudo apt install build-essential cmake libx11-dev libxtst-dev libxrandr-dev libx
 ### Steps
 
 ```bash
-git clone https://github.com/webadderallorg/Recordly.git recordly
-cd recordly
+git clone https://github.com/DharambirAgrawal/clip-agent.git
+cd clip-agent
 npm install
 npm run dev
 ```
@@ -226,7 +211,7 @@ Locally built apps may be quarantined by macOS.
 Remove the quarantine flag with:
 
 ```bash
-xattr -rd com.apple.quarantine /Applications/Recordly.app
+xattr -rd com.apple.quarantine /Applications/ClipAgent.app
 ```
 
 ---
@@ -248,7 +233,7 @@ xattr -rd com.apple.quarantine /Applications/Recordly.app
 
 ## Record
 
-1. Launch Recordly.
+1. Launch ClipAgent.
 2. Select a screen or window.
 3. Choose microphone and system-audio options.
 4. Start recording.
@@ -282,7 +267,7 @@ You can adjust format-specific settings such as quality, GIF frame rate, GIF loo
 
 ### Cursor capture
 
-Recordly renders a polished cursor overlay on top of the recording. Platform cursor-hiding behavior still depends on OS support.
+ClipAgent renders a polished cursor overlay on top of the recording. Platform cursor-hiding behavior still depends on OS support.
 
 **macOS**
 - ScreenCaptureKit can exclude the real cursor cleanly.
@@ -312,7 +297,7 @@ System audio support varies by platform.
 
 # How It Works
 
-Recordly combines a platform-specific capture layer with a renderer-driven editor and export pipeline.
+ClipAgent combines a platform-specific capture layer with a renderer-driven editor and export pipeline — plus an MCP server (`mcp-server/`) that drives the project format and a parallel ffmpeg-based export/analysis pipeline directly, for AI-driven editing. See `mcp-server/README.md` for what that covers today.
 
 **Capture**
 - Electron coordinates recording and application flow
@@ -336,7 +321,7 @@ Recordly combines a platform-specific capture layer with a renderer-driven edito
 
 # License
 
-Recordly is licensed under the **AGPL 3.0**.
+ClipAgent is licensed under the **AGPL 3.0**, same as the project it's forked from. See `LICENSE.md` for the full text and its additional terms.
 
 ---
 
@@ -344,10 +329,8 @@ Recordly is licensed under the **AGPL 3.0**.
 
 ## Acknowledgements
 
-Recordly originally started as a fork of [OpenScreen](https://github.com/siddharthvaddem/openscreen). Over 80% of code has diverged since.
-Many features of OpenScreen such as its zoom animations are directly ported from early versions of Recordly.
+ClipAgent is a fork of [Recordly](https://github.com/webadderallorg/Recordly) (AGPLv3), created by [@webadderall](https://x.com/webadderall).
 
-Created by  
-[@webadderall](https://x.com/webadderall)
+Recordly itself originally started as a fork of [OpenScreen](https://github.com/siddharthvaddem/openscreen); over 80% of its code has diverged since, though many features such as its zoom animations are directly ported from early versions of Recordly.
 
 ---

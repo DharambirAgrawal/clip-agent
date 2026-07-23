@@ -3,14 +3,19 @@ import path from "node:path";
 import fs from "node:fs/promises";
 
 /**
- * Recordly's Electron main process resolves these via `app.getPath(...)`, which isn't
+ * The app's Electron main process resolves these via `app.getPath(...)`, which isn't
  * available outside a running Electron process. This mirrors Electron's own convention
  * (appData base + productName) so this server reads/writes the same directories the
  * desktop app uses, without needing the app itself to be running.
  *
+ * PRODUCT_NAME must match `productName` in the root package.json / electron-builder.json5
+ * exactly — that's what Electron's `app.getPath("userData")` actually keys off of, not
+ * the project file extension below (which is intentionally unchanged from Recordly's
+ * `.recordly` format — see mcp-server/README.md for why that wasn't renamed too).
+ *
  * Override with RECORDLY_USER_DATA_DIR for a dev instance or a non-default install.
  */
-const PRODUCT_NAME = "Recordly";
+const PRODUCT_NAME = "ClipAgent";
 const PROJECT_FILE_EXTENSION = "recordly";
 const PROJECTS_DIRECTORY_NAME = "Projects";
 const PROJECT_THUMBNAIL_SUFFIX = ".preview.png";
