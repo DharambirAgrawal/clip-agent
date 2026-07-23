@@ -7,7 +7,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 import { extractSampleFrames } from "./exporter.js";
-import { detectSilence, getMediaInfo } from "./media.js";
+import { detectSceneChanges, detectSilence, getMediaInfo } from "./media.js";
 import {
 	createProject,
 	listProjects,
@@ -95,6 +95,45 @@ server.tool(
 	async ({ filePath, minDurationSec, noiseDb }) => {
 		const intervals = await detectSilence(filePath, { minDurationSec, noiseDb });
 		return textResult(JSON.stringify(intervals, null, 2));
+	},
+);
+
+server.tool(
+	"detect_scene_changes",
+	"Detect timestamps of significant visual change in a video (a new screen appearing, a message being sent, a dialog opening). This is the main way to find candidate moments worth zooming into or trimming around for recordings with no cursor telemetry (touch/mobile screens) or no audio — scan_frames around the returned timestamps to see what actually happened at each one before deciding.",
+	{
+		filePath: z.string().describe("Absolute path to a video file"),
+		threshold: z
+			.number()
+			.min(0)
+			.max(1)
+			.optional()
+			.describe("Sensitivity 0-1; lower reports more changes (default 0.15). Try 0.05-0.1 for subtle UI changes, 0.3+ for only major cuts."),
+	},
+	async ({ filePath, threshold }) => {
+		const changes = await detectSceneChanges(filePath, threshold);
+		return textResult(JSON.stringify(changes, null, 2));
+	},
+);
+
+server.tool(
+	"scan_frames",
+	"Extract evenly spaced frames from a video (optionally within a time range) as images, so you can actually look at the footage to decide what's worth cutting, zooming, or captioning — rather than guessing at timestamps. Use a wide range with a handful of frames to get oriented, then a narrow range with more frames to pinpoint an exact moment (e.g. exactly when a message is sent).",
+	{
+		filePath: z.string().describe("Absolute path to a video file"),
+		sampleCount: z.number().min(1).max(20).optional().describe("How many evenly spaced frames to return (default 6)"),
+		startMs: z.number().optional().describe("Start of the range to sample within (default 0)"),
+		endMs: z.number().optional().describe("End of the range to sample within (default: end of video)"),
+	},
+	async ({ filePath, sampleCount, startMs, endMs }) => {
+		const range = startMs !== undefined || endMs !== undefined ? { startMs: startMs ?? 0, endMs: endMs ?? Number.MAX_SAFE_INTEGER } : undefined;
+		const frames = await extractSampleFrames(filePath, sampleCount ?? 6, range);
+		return {
+			content: [
+				{ type: "text" as const, text: JSON.stringify(frames.map((f) => ({ timestampMs: f.timestampMs })), null, 2) },
+				...frames.map((frame) => ({ type: "image" as const, data: frame.pngBase64, mimeType: "image/png" })),
+			],
+		};
 	},
 );
 

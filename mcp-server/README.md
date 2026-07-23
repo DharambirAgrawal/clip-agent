@@ -36,6 +36,8 @@ By default this reads/writes the same `Projects` folder the ClipAgent desktop ap
 | `open_project` | Read a project's current editing state |
 | `get_media_info` | Duration, resolution, frame rate, audio presence for any media file |
 | `detect_silence` | Detect silent ranges in a file's audio track |
+| `detect_scene_changes` | Detect timestamps of significant visual change (new screen, message sent, dialog opened) |
+| `scan_frames` | Extract evenly spaced frames from a video (optionally within a time range) to actually look at the footage |
 | `cut_silence` | Detect silence in a project's source and add trim regions covering it |
 | `trim_range` | Add a trim region (a range to cut) to a project |
 | `add_zoom` | Add a zoom-in region focused on a point in frame — renders as a real animated zoom |
@@ -55,12 +57,13 @@ Real and tested (see the project's plan artifact for the full roadmap):
 - `transcribe_audio` / `add_caption_track` — real speech-to-text using the app's own bundled `whisper-cli` binary and model, with word-level timestamps. Includes a caption-parsing fix for whisper.cpp's zero-width control/punctuation tokens (ported from `electron/ipc/captions/parser.ts`, fixed here).
 - `suggest_zooms` — ports the app's own click-clustering auto-zoom heuristic (`zoomSuggestionUtils.ts`) over a recording's `<video>.cursor.json` telemetry sidecar. Correctly reports "no telemetry" rather than fabricating suggestions for videos with no tracked cursor (e.g. phone screen recordings).
 - `export_final` / `render_preview` — a real ffmpeg pipeline that applies trim regions and composites wallpaper background, padding, rounded corners (squircle mask), drop shadow, a webcam bubble, **and animated zoom regions** (ease in, hold, ease out — via the `zoompan` filter). The static layout geometry is ported verbatim from the app's own pure math (`computePaddedLayout`/`scalePreviewBorderRadius`, `webcamOverlay.ts`, `squircle.ts`, `shadowProfile.ts`, `ZOOM_DEPTH_SCALES`). Zoom *rendering* itself (`zoomRenderer.ts`) is new ffmpeg-native code, not a port — Recordly's own zoom rendering is a per-frame Canvas/WebGL redraw with no ffmpeg equivalent to port. Everything here was verified visually against real rendered frames, not just "ran without error" — including two ffmpeg-version-specific dead ends found by testing (this build's `crop` filter accepts `t`-referencing expressions and even advertises command support, but neither actually works — confirmed empirically — so zoom uses `zoompan` instead, which does animate correctly here).
+- `detect_scene_changes` / `scan_frames` — the fix for a real gap: earlier versions gave the model no way to actually see the raw footage before deciding where to trim/zoom, so those decisions were guesses. `detect_scene_changes` (ffmpeg scene-score) flags candidate moments; verified against the demo video it correctly caught a known screen transition (a manually-identified idle→content cut at 3.8s came back as a detected change at 3.92s) but is noisy/imperfect on its own — a chat bubble appearing on a mostly-static background can be too subtle to score highly. It's meant to be paired with `scan_frames` (extract real frames around a candidate timestamp, or sweep a whole video/range) so the model looks at what actually happened rather than trusting the heuristic blindly.
 
 Not yet wired (this is where the *dynamic* render pipeline lives — per-frame Canvas/WebGL rendering tied to code that only runs inside the desktop app's renderer process):
 - Cursor rendering and device-frame chrome (`frame` field, e.g. browser mockups) are stored correctly in the project file but not yet rendered in export. Recordly's real compositor for these is `src/lib/exporter/modernFrameRenderer.ts` (4000+ lines of per-frame Canvas/WebGL work) — wiring these means bridging to the running desktop app, not writing new ffmpeg filters.
 - Zoom rendering here doesn't handle `connectZooms` (smooth chained transitions between adjacent regions) — each region eases in/out independently.
 - Webcam bubble compositing here assumes it starts at the same time as the main recording (a `timeOffsetMs` shift is applied, but only as a simple ms offset — not validated against the app's own sync logic beyond that).
-- Speaker diarization and scene detection are still just plan items, not tools.
+- Speaker diarization is still just a plan item, not a tool.
 
 ## Project schema
 

@@ -154,16 +154,22 @@ export interface PreviewFrame {
 	pngBase64: string;
 }
 
-/** Samples evenly spaced frames from an already-rendered video file as PNGs. */
-export async function extractSampleFrames(videoPath: string, sampleCount = 4): Promise<PreviewFrame[]> {
+/** Samples evenly spaced frames from a video file (or a sub-range of it) as PNGs. */
+export async function extractSampleFrames(
+	videoPath: string,
+	sampleCount = 4,
+	range?: { startMs: number; endMs: number },
+): Promise<PreviewFrame[]> {
 	const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "recordly-mcp-frames-"));
 	try {
 		const previewInfo = await getMediaInfo(videoPath);
-		const durationMs = previewInfo.durationMs;
+		const rangeStartMs = Math.max(0, range?.startMs ?? 0);
+		const rangeEndMs = Math.min(previewInfo.durationMs, range?.endMs ?? previewInfo.durationMs);
+		const rangeDurationMs = Math.max(1, rangeEndMs - rangeStartMs);
 		const frames: PreviewFrame[] = [];
 
 		for (let i = 0; i < sampleCount; i++) {
-			const timestampMs = Math.round(((i + 0.5) / sampleCount) * durationMs);
+			const timestampMs = Math.round(rangeStartMs + ((i + 0.5) / sampleCount) * rangeDurationMs);
 			const framePath = path.join(tempDir, `frame-${i}-${randomUUID()}.png`);
 			await execFileAsync(getFfmpegPath(), [
 				"-y",

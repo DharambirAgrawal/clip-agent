@@ -119,3 +119,51 @@ export async function detectSilence(
 
 	return intervals;
 }
+
+export interface SceneChange {
+	timestampMs: number;
+	/** 0-1, how different this frame is from the previous one — higher means a bigger visual jump. */
+	score: number;
+}
+
+/**
+ * Detects moments of significant visual change (a new screen appearing, a message
+ * being sent, a dialog opening) via ffmpeg's scene-detection filter. This is the main
+ * signal for finding "worth zooming into" moments in recordings with no cursor
+ * telemetry to fall back on (touch/mobile screen recordings, or any video with the
+ * mouse untracked) — detect_silence/suggest_zooms don't help there since there's often
+ * no audio and no mouse.
+ */
+export async function detectSceneChanges(filePath: string, threshold = 0.15): Promise<SceneChange[]> {
+	const stderr = await new Promise<string>((resolve, reject) => {
+		const child = spawn(getFfmpegPath(), [
+			"-i",
+			filePath,
+			"-filter:v",
+			`select='gt(scene,${threshold})',showinfo`,
+			"-f",
+			"null",
+			"-",
+		]);
+		let output = "";
+		child.stderr.on("data", (chunk: Buffer) => {
+			output += chunk.toString();
+		});
+		child.on("error", reject);
+		child.on("close", () => resolve(output));
+	});
+
+	const changes: SceneChange[] = [];
+	for (const line of stderr.split("\n")) {
+		if (!line.includes("Parsed_showinfo")) continue;
+		const timeMatch = line.match(/pts_time:([\d.]+)/);
+		const scoreMatch = line.match(/scene_score\s*[:=]\s*([\d.]+)/) ?? line.match(/lavfi\.scene_score=([\d.]+)/);
+		if (!timeMatch) continue;
+		changes.push({
+			timestampMs: Math.round(Number(timeMatch[1]) * 1000),
+			score: scoreMatch ? Number(scoreMatch[1]) : threshold,
+		});
+	}
+
+	return changes;
+}
