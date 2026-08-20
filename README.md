@@ -10,7 +10,7 @@
 
 ### Screen recording and editing, driven by Claude
 
-ClipAgent is a screen recorder and editor for **walkthroughs, demos, and product videos**, with an MCP server so Claude can transcribe, trim, style, and export it directly — no timeline dragging required.
+ClipAgent is a screen recorder and editor for **walkthroughs, demos, and product videos**, with an MCP server so Claude can transcribe, trim, style, and export it directly. No timeline dragging required.
 
 <img width="1280" height="720" alt="MP4 to GIF export" src="https://github.com/user-attachments/assets/e6d68606-5fc0-4f70-99cd-7521982dc13b" />
 
@@ -18,7 +18,7 @@ ClipAgent is a screen recorder and editor for **walkthroughs, demos, and product
 
 ## What is ClipAgent?
 
-ClipAgent is a desktop screen recorder and editor with motion-driven presentation tools built in — auto-zooms, cursor polish, webcam bubbles, styled frames — plus an [MCP](https://modelcontextprotocol.io) server (`mcp-server/`) that exposes that same editing model as tools an AI agent can call. Instead of sending raw footage to a motion designer for zooms and polish, or dragging clips on a timeline by hand, Claude can open a project, look at the footage, cut silence, add zooms, generate captions, and export — directly against the app's real project file format.
+ClipAgent is a desktop screen recorder and editor with motion-driven presentation tools built in (auto-zooms, cursor polish, webcam bubbles, styled frames), plus an [MCP](https://modelcontextprotocol.io) server (`mcp-server/`) that exposes that same editing model as tools an AI agent can call. Instead of sending raw footage to a motion designer for zooms and polish, or dragging clips on a timeline by hand, Claude can open a project, look at the footage, cut silence, add zooms, generate captions, and export, all directly against the app's real project file format.
 
 ClipAgent runs on:
 
@@ -68,7 +68,7 @@ Platform notes:
 - MP4 and GIF export with quality, frame-rate, loop, and size controls
 
 ### AI-driven editing (MCP)
-- Claude (or any MCP client) can transcribe, trim, zoom, style, caption, and export a project directly — see [MCP Tools](#mcp-tools) below
+- Claude (or any MCP client) can transcribe, trim, zoom, style, caption, and export a project directly (see [MCP Tools](#mcp-tools) below)
 
 ### Extensions
 - A permission-gated extension system (carried over from Recordly) for cursor click sounds, device frames, browser mockups, wallpapers, render hooks, and settings panels, loaded locally via `Extensions -> Open Directory`
@@ -107,7 +107,7 @@ The MCP server (`mcp-server/`) reads and writes the exact same `.recordly` proje
 | `scan_frames` | Extract evenly spaced frames from a video (optionally within a time range) so the model can actually look at the footage |
 | `cut_silence` | Detect silence in a project's source and add trim regions covering it |
 | `trim_range` | Add a trim region (a range to cut) to a project |
-| `add_zoom` | Add a zoom-in region focused on a point in frame — renders as a real animated zoom |
+| `add_zoom` | Add a zoom-in region focused on a point in frame; renders as a real animated zoom |
 | `suggest_zooms` | Analyze recorded cursor clicks/dwells to suggest zoom regions (needs desktop-recording telemetry) |
 | `add_webcam_bubble` | Enable/position a webcam overlay |
 | `apply_frame_style` | Set frame, wallpaper, padding, corner radius, shadow, aspect ratio |
@@ -116,7 +116,7 @@ The MCP server (`mcp-server/`) reads and writes the exact same `.recordly` proje
 | `render_preview` | Render the current edits (trim + zoom + wallpaper/padding/radius/shadow/webcam) and return sampled frames as images |
 | `export_final` | Export the fully composited (trim + zoom + static layout) video to an MP4 |
 
-Silence detection, trims, webcam settings, frame style, transcription, zoom rendering, and export are real, tested data- and ffmpeg-level operations — not mocks. Some parts of the desktop app's dynamic per-frame Canvas/WebGL renderer (cursor rendering, device-frame chrome, chained zoom transitions, speaker diarization) aren't wired into the MCP export pipeline yet. See [`mcp-server/README.md`](./mcp-server/README.md) for the full, current "what's real vs. not yet" breakdown.
+Silence detection, trims, webcam settings, frame style, transcription, zoom rendering, and export are real, tested data- and ffmpeg-level operations, not mocks. Some parts of the desktop app's dynamic per-frame Canvas/WebGL renderer (cursor rendering, device-frame chrome, chained zoom transitions, speaker diarization) aren't wired into the MCP export pipeline yet. See [`mcp-server/README.md`](./mcp-server/README.md) for the full, current "what's real vs. not yet" breakdown.
 
 ---
 
@@ -140,7 +140,7 @@ Silence detection, trims, webcam settings, frame style, transcription, zoom rend
 
 ### Download a build
 
-No prebuilt releases are published for this fork yet — build from source below. (The upstream Recordly project publishes its own releases at [webadderallorg/Recordly/releases](https://github.com/webadderallorg/Recordly/releases), but those are a different app.)
+No prebuilt releases are published for this fork yet. Build from source below. (The upstream Recordly project publishes its own releases at [webadderallorg/Recordly/releases](https://github.com/webadderallorg/Recordly/releases), but those are a different app.)
 
 ### Build from source
 
@@ -159,7 +159,7 @@ npm install
 npm run dev
 ```
 
-For packaged builds: `npm run build`, or a target-specific variant — `npm run build:mac`, `npm run build:win`, `npm run build:linux`.
+For packaged builds: `npm run build`, or a target-specific variant such as `npm run build:mac`, `npm run build:win`, or `npm run build:linux`.
 
 **macOS "App cannot be opened"**: locally built apps may be quarantined by macOS. Remove the flag with:
 
@@ -196,7 +196,7 @@ npm install
 npm run build
 ```
 
-Then point your MCP client at the built server — for example, in Claude Desktop's or Claude Code's MCP config:
+Then point your MCP client at the built server, for example in Claude Desktop's or Claude Code's MCP config:
 
 ```json
 {
@@ -209,20 +209,20 @@ Then point your MCP client at the built server — for example, in Claude Deskto
 }
 ```
 
-By default the server reads/writes the same `Projects` folder the desktop app uses (`~/Library/Application Support/ClipAgent/recordings/Projects` on macOS, the OS-equivalent elsewhere). Set `RECORDLY_USER_DATA_DIR` to point it at a different data directory (e.g. a `-dev` build). Once connected, Claude can list your projects, look at the footage (`scan_frames`, `detect_scene_changes`), cut silence, add zooms and captions, and export — using the [MCP Tools](#mcp-tools) above.
+By default the server reads/writes the same `Projects` folder the desktop app uses (`~/Library/Application Support/ClipAgent/recordings/Projects` on macOS, the OS-equivalent elsewhere). Set `RECORDLY_USER_DATA_DIR` to point it at a different data directory (e.g. a `-dev` build). Once connected, Claude can list your projects, look at the footage (`scan_frames`, `detect_scene_changes`), cut silence, add zooms and captions, and export, using the [MCP Tools](#mcp-tools) above.
 
 ---
 
 ## Limitations
 
-**Cursor capture**
+### Cursor capture
 ClipAgent renders a polished cursor overlay on top of the recording; platform cursor-hiding behavior still depends on OS support. macOS/ScreenCaptureKit can exclude the real cursor cleanly. Windows needs Build 19041+ and the native capture helper, or the real cursor may remain visible. Linux's Electron desktop capture doesn't support cursor hiding, so enabling the rendered overlay there can show both cursors.
 
-**System audio**
+### System audio
 Native WASAPI on Windows; usually requires PipeWire on Linux; requires macOS 14.0+ and the ScreenCaptureKit workflow on macOS.
 
-**MCP export pipeline**
-As noted in [MCP Tools](#mcp-tools), a few of the desktop editor's dynamic rendering features (cursor overlay rendering, device-frame chrome, chained zoom transitions, speaker diarization) aren't yet reproduced by the MCP server's ffmpeg-based export — those live in the app's per-frame Canvas/WebGL renderer.
+### MCP export pipeline
+As noted in [MCP Tools](#mcp-tools), a few of the desktop editor's dynamic rendering features (cursor overlay rendering, device-frame chrome, chained zoom transitions, speaker diarization) aren't yet reproduced by the MCP server's ffmpeg-based export. Those live in the app's per-frame Canvas/WebGL renderer.
 
 ---
 
@@ -230,23 +230,23 @@ As noted in [MCP Tools](#mcp-tools), a few of the desktop editor's dynamic rende
 
 ClipAgent combines a platform-specific capture layer with a renderer-driven editor and export pipeline, plus an MCP server that drives the same project format through a parallel, ffmpeg-based pipeline for AI-driven editing.
 
-**Capture**
+### Capture
 - Electron coordinates recording and application flow
 - macOS uses native ScreenCaptureKit helpers; Windows uses a native Windows Graphics Capture (WGC) helper and native audio helpers where available
 
-**Editing (desktop app)**
+### Editing (desktop app)
 - Timeline regions define zooms, trims, speed changes, audio overlays, and annotations
 - Cursor and webcam styling are applied in the editor state
 - Scene composition and preview rendering are handled by PixiJS; the same scene logic is used for export
 
-**Editing (MCP server)**
+### Editing (MCP server)
 - `mcp-server/` is a standalone Node/TypeScript process speaking MCP over stdio, built with the official `@modelcontextprotocol/sdk`
 - It reads and writes the same `.recordly` project JSON as the desktop app (`mcp-server/src/projectStore.ts`), touching only the fields a given tool needs so it can't clobber settings it doesn't understand
-- Media analysis (`detect_silence`, `detect_scene_changes`, `get_media_info`) and rendering (`render_preview`, `export_final`) run against a second, ffmpeg-native pipeline rather than the app's Canvas/WebGL renderer — trim, static layout (wallpaper/padding/corners/shadow/webcam), and animated zoom (via ffmpeg's `zoompan` filter) are ported from or verified against the app's own geometry code
+- Media analysis (`detect_silence`, `detect_scene_changes`, `get_media_info`) and rendering (`render_preview`, `export_final`) run against a second, ffmpeg-native pipeline rather than the app's Canvas/WebGL renderer: trim, static layout (wallpaper/padding/corners/shadow/webcam), and animated zoom (via ffmpeg's `zoompan` filter) are ported from or verified against the app's own geometry code
 - Transcription (`transcribe_audio`, `add_caption_track`) uses the desktop app's own bundled `whisper-cli` binary and model for real word-level speech-to-text
 - `suggest_zooms` reuses the app's click-clustering auto-zoom heuristic over a recording's cursor-telemetry sidecar file
 
-**Projects**
+### Projects
 - `.recordly` files store the source media path plus editor state so work can be reopened later, in the app or through the MCP server
 
 ---
